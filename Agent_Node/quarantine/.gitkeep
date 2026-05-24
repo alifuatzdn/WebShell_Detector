@@ -1,0 +1,3 @@
+# Detected malicious files are automatically quarantined in this directory.
+# Files here are set to 000 permissions (read/write/execute denied).
+
