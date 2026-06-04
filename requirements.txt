@@ -1,0 +1,16 @@
+# Requirements for WebShell_Detector
+# Install with: pip install -r requirements.txt
+
+flask>=2.0
+watchdog>=2.1
+pandas>=1.3
+numpy>=1.21
+scikit-learn>=1.0
+xgboost>=1.6
+joblib>=1.1
+requests>=2.25
+werkzeug>=2.0
+
+# Optional (if you use features that require them)
+# python-dotenv>=0.21
+

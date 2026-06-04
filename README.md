@@ -31,10 +31,17 @@ The system consists of three main components:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install flask watchdog scikit-learn xgboost pandas joblib tqdm werkzeug
+pip install -r requirements.txt
 ```
 
 > Note: `markupsafe` is required for Flask template rendering
+
+### Dependency Check
+To verify your local environment against `requirements.txt`:
+```bash
+python3 tools/check_requirements.py
+```
+This reports missing or outdated packages before running the server or training scripts.
 
 ### Running the System (Same Machine)
 
@@ -264,12 +271,3 @@ python external_data_test.py
 - **Monitor disk space** for quarantine directory growth
 - **Regularly review** ban list and logs
 - **Update models** with new samples for threat evolution
-
-## 📄 License
-
-This project is for educational and authorized security testing purposes only.
-
-## 👥 Authors
-
-WebShell Detection System Team - May 2026
-

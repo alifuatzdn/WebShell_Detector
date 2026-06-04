@@ -170,7 +170,7 @@ if __name__ == "__main__":
     log_file = os.path.join(AGENT_DIR, "access.log")
     
     # Merkez sunucu API adresi
-    SERVER_URL = "http://172.28.154.59:5000/analyze"
+    SERVER_URL = "http://212.253.204.136:5000/analyze"
 
     os.makedirs(watch_dir, exist_ok=True)
     os.makedirs(quarantine_dir, exist_ok=True)
