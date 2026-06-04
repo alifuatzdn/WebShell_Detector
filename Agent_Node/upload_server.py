@@ -4,14 +4,19 @@ from flask import Flask, request
 from markupsafe import escape
 from werkzeug.utils import secure_filename
 import logging
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "test_www")
-LOG_FILE = os.path.join(BASE_DIR, "access.log")
-BANNED_IPS_FILE = os.path.join(BASE_DIR, "banned_ips.txt")
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", os.path.join(BASE_DIR, "test_www"))
+LOG_FILE = os.getenv("LOG_FILE", os.path.join(BASE_DIR, "access.log"))
+BANNED_IPS_FILE = os.getenv("BANNED_IPS_FILE", os.path.join(BASE_DIR, "banned_ips.txt"))
+UPLOAD_HOST = os.getenv("UPLOAD_HOST", "0.0.0.0")
+UPLOAD_PORT = int(os.getenv("UPLOAD_PORT", "8000"))
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -117,5 +122,5 @@ if __name__ == "__main__":
     log.setLevel(logging.ERROR)
 
     print("[INFO] Upload demo site is running")
-    print("[INFO] Open in browser: http://127.0.0.1:8000")
-    app.run(host='0.0.0.0', port=8000, debug=False)
+    print(f"[INFO] Open in browser: http://127.0.0.1:{UPLOAD_PORT}")
+    app.run(host=UPLOAD_HOST, port=UPLOAD_PORT, debug=False)

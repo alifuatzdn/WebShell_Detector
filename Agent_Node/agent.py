@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import time
 import requests
+from dotenv import load_dotenv
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -174,12 +175,17 @@ class WebShellAgent(FileSystemEventHandler):
 if __name__ == "__main__":
     # Use the Agent_Node folder as the runtime base
     AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
-    watch_dir = os.path.join(AGENT_DIR, "test_www")
-    quarantine_dir = os.path.join(AGENT_DIR, "quarantine")
-    log_file = os.path.join(AGENT_DIR, "access.log")
+    PROJECT_ROOT = os.path.dirname(AGENT_DIR)
+    load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+    watch_dir = os.getenv("WATCH_DIR", os.path.join(AGENT_DIR, "test_www"))
+    quarantine_dir = os.getenv("QUARANTINE_DIR", os.path.join(AGENT_DIR, "quarantine"))
+    log_file = os.getenv("LOG_FILE", os.path.join(AGENT_DIR, "access.log"))
 
-    # Central server API address
-    SERVER_URL = "http://212.253.204.136:5000/analyze"
+    # Set these manually for the machine running Master_Server
+    SERVER_HOST = os.getenv("SERVER_HOST", "127.0.0.1")
+    SERVER_PORT = os.getenv("SERVER_PORT", "5000")
+    SERVER_URL = os.getenv("SERVER_URL", f"http://{SERVER_HOST}:{SERVER_PORT}/analyze")
+    EVENT_COOLDOWN = float(os.getenv("EVENT_COOLDOWN", "1.5"))
 
     os.makedirs(watch_dir, exist_ok=True)
     os.makedirs(quarantine_dir, exist_ok=True)
@@ -193,11 +199,13 @@ if __name__ == "__main__":
             f.write("")
 
     event_handler = WebShellAgent(SERVER_URL, watch_dir, quarantine_dir, log_file)
+    event_handler.event_cooldown = EVENT_COOLDOWN
     observer = Observer()
     observer.schedule(event_handler, watch_dir, recursive=True)
 
     print(f"[WATCH] Agent active, watching: '{watch_dir}'")
     print(f"[SERVER] Central server: {SERVER_URL}")
+    print(f"[TIP] Change SERVER_HOST or SERVER_URL with environment variables if needed")
     print("Press CTRL+C to exit")
 
     observer.start()

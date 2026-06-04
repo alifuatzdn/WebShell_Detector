@@ -4,12 +4,14 @@ import pandas as pd
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 from feature_extraction import extract_features
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
 # --- Settings and model loading ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 # Load models and scaler directly from AI_Model_Builder
 MODELS_DIR = os.path.join(PROJECT_ROOT, "AI_Model_Builder", "models")
@@ -17,11 +19,13 @@ SCALER_PATH = os.path.join(PROJECT_ROOT, "AI_Model_Builder", "scaler.joblib")
 DATASET_PATH = os.path.join(PROJECT_ROOT, "AI_Model_Builder", "dataset", "webshell_features.csv")
 
 # Select the model to use
-MODEL_NAME = "XGBoost.joblib"
+MODEL_NAME = os.getenv("MODEL_NAME", "XGBoost.joblib")
 MODEL_PATH = os.path.join(MODELS_DIR, MODEL_NAME)
 
 # Probability threshold
-PROBABILITY_THRESHOLD = 0.50
+PROBABILITY_THRESHOLD = float(os.getenv("PROBABILITY_THRESHOLD", "0.50"))
+SERVER_HOST = os.getenv("SERVER_HOST", "0.0.0.0")
+SERVER_PORT = int(os.getenv("SERVER_PORT", "5000"))
 
 print("[SERVER] Loading model and scaler")
 try:
@@ -34,7 +38,7 @@ try:
     # Load feature names to avoid warnings
     df_sample = pd.read_csv(DATASET_PATH, nrows=1)
     feature_names = df_sample.drop('label', axis=1).columns
-    print(f"[SERVER] {MODEL_NAME} loaded and ready on port 5000")
+    print(f"[SERVER] {MODEL_NAME} loaded and ready on port {SERVER_PORT}")
 except Exception as e:
     print(f"[SERVER] Startup error: {e}")
     exit()
@@ -102,4 +106,4 @@ def analyze_file():
 
 if __name__ == '__main__':
     # Start on 0.0.0.0 so other machines can connect
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host=SERVER_HOST, port=SERVER_PORT, debug=False)

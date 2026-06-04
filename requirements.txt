@@ -10,7 +10,6 @@ xgboost>=1.6
 joblib>=1.1
 requests>=2.25
 werkzeug>=2.0
+python-dotenv>=1.0
 
 # Optional (if you use features that require them)
-# python-dotenv>=0.21
-

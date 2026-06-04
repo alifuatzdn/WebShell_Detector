@@ -65,9 +65,24 @@ python upload_server.py
 
 ### Remote Connection (Same Network)
 
-Edit `Agent_Node/agent.py` line 173 to use the server's LAN IP:
-```python
-SERVER_URL = "http://172.28.154.59:5000/analyze"  # Replace with actual IP
+Use the project root `.env` file to set the values before starting the services
+
+Example values for a same-network setup:
+
+```env
+SERVER_HOST=192.168.1.25
+SERVER_PORT=5000
+SERVER_URL=http://192.168.1.25:5000/analyze
+WATCH_DIR=C:\Users\ozden\OneDrive\Masaüstü\WebShell_Detector\Agent_Node\test_www
+QUARANTINE_DIR=C:\Users\ozden\OneDrive\Masaüstü\WebShell_Detector\Agent_Node\quarantine
+LOG_FILE=C:\Users\ozden\OneDrive\Masaüstü\WebShell_Detector\Agent_Node\access.log
+UPLOAD_FOLDER=C:\Users\ozden\OneDrive\Masaüstü\WebShell_Detector\Agent_Node\test_www
+UPLOAD_HOST=0.0.0.0
+UPLOAD_PORT=8000
+BANNED_IPS_FILE=C:\Users\ozden\OneDrive\Masaüstü\WebShell_Detector\Agent_Node\banned_ips.txt
+MODEL_NAME=XGBoost.joblib
+PROBABILITY_THRESHOLD=0.50
+EVENT_COOLDOWN=1.5
 ```
 
 Then access the upload interface from another machine:
@@ -122,6 +137,22 @@ SERVER_URL = "http://127.0.0.1:5000/analyze"
 ```python
 SERVER_URL = "http://<ACTUAL_IP>:5000/analyze"
 ```
+
+**Environment variables loaded from `.env`:**
+
+- `SERVER_HOST` - analysis server host
+- `SERVER_PORT` - analysis server port
+- `SERVER_URL` - full analysis URL, optional override
+- `WATCH_DIR` - directory watched by `agent.py`
+- `QUARANTINE_DIR` - quarantine folder for malicious files
+- `LOG_FILE` - access log file path
+- `UPLOAD_FOLDER` - upload folder used by `upload_server.py`
+- `UPLOAD_HOST` - host for the upload web app
+- `UPLOAD_PORT` - port for the upload web app
+- `BANNED_IPS_FILE` - banned IP list file
+- `MODEL_NAME` - model file name used by `server.py`
+- `PROBABILITY_THRESHOLD` - malicious probability cutoff
+- `EVENT_COOLDOWN` - duplicate event cooldown in seconds
 
 ### ML Model Selection
 Edit `Master_Server/server.py` line 20:
