@@ -7,67 +7,67 @@ from feature_extraction import extract_features
 
 app = Flask(__name__)
 
-# --- AYARLAR VE MODEL YÜKLEME ---
+# --- Settings and model loading ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 
-# Modeller ve Scaler artık doğrudan AI_Model_Builder içinden okunacak (Kopyalamaya gerek yok)
+# Load models and scaler directly from AI_Model_Builder
 MODELS_DIR = os.path.join(PROJECT_ROOT, "AI_Model_Builder", "models")
 SCALER_PATH = os.path.join(PROJECT_ROOT, "AI_Model_Builder", "scaler.joblib")
 DATASET_PATH = os.path.join(PROJECT_ROOT, "AI_Model_Builder", "dataset", "webshell_features.csv")
 
-# Otonom olarak kullanılacak modeli buradan seçebilirsin
+# Select the model to use
 MODEL_NAME = "XGBoost.joblib"
 MODEL_PATH = os.path.join(MODELS_DIR, MODEL_NAME)
 
-# Olasılık eşik değeri
+# Probability threshold
 PROBABILITY_THRESHOLD = 0.50
 
-print("🧠 [SERVER] Yapay Zeka Modeli ve Ölçekleyici Yükleniyor...")
+print("[SERVER] Loading model and scaler")
 try:
     if not os.path.exists(MODEL_PATH):
-        raise FileNotFoundError(f"Model bulunamadı: {MODEL_PATH}")
-        
+        raise FileNotFoundError(f"Model not found: {MODEL_PATH}")
+
     model = joblib.load(MODEL_PATH)
     scaler = joblib.load(SCALER_PATH)
     
-    # Uyarıları önlemek için feature isimlerini alıyoruz
+    # Load feature names to avoid warnings
     df_sample = pd.read_csv(DATASET_PATH, nrows=1)
     feature_names = df_sample.drop('label', axis=1).columns
-    print(f"✅ [SERVER] {MODEL_NAME} başarıyla yüklendi ve 5000 portunda dinlemeye hazır!")
+    print(f"[SERVER] {MODEL_NAME} loaded and ready on port 5000")
 except Exception as e:
-    print(f"❌ [SERVER] Başlatma Hatası: {e}")
+    print(f"[SERVER] Startup error: {e}")
     exit()
 
 
 @app.route('/analyze', methods=['POST'])
 def analyze_file():
-    """Ajanlardan gelen dosyayı analiz eden API Endpoint'i"""
-    
+    """Analyze files sent by agents"""
+
     if 'file' not in request.files:
-        return jsonify({"error": "Dosya bulunamadı"}), 400
-        
+        return jsonify({"error": "File not found"}), 400
+
     file = request.files['file']
     
     if file.filename == '':
-        return jsonify({"error": "Dosya seçilmedi"}), 400
+        return jsonify({"error": "No file selected"}), 400
 
-    # Dosyayı geçici olarak kaydet
+    # Save the file temporarily
     temp_path = os.path.join(BASE_DIR, f"temp_{secure_filename(file.filename)}")
     file.save(temp_path)
     
     try:
-        # Sunucu tarafında (Güvenli bölgede) özellik çıkarımı yap!
+        # Extract features on the server side
         features = extract_features(temp_path, label=0)
         
-        # Analiz bitti, geçici dosyayı hemen sil
+        # Delete the temp file right after analysis
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
         if not features:
-            return jsonify({"error": "Özellikler çıkarılamadı"}), 500
+            return jsonify({"error": "Failed to extract features"}), 500
 
-        # Makine Öğrenmesi Tahmini
+        # ML prediction
         features_df = pd.DataFrame([features]).drop('label', axis=1)
         features_scaled = pd.DataFrame(scaler.transform(features_df), columns=feature_names)
 
@@ -78,20 +78,20 @@ def analyze_file():
             is_malicious = int(model.predict(features_scaled)[0])
             malicious_prob = 1.0 if is_malicious == 1 else 0.0
 
-        # Ajan'a dönecek yanıt
+        # Response back to the agent
         if is_malicious == 1:
-            print(f"🚨 [ALARM] Zararlı dosya tespit edildi: {file.filename} (Olasılık: %{malicious_prob*100:.1f})")
+            print(f"[ALARM] Malicious file detected: {file.filename} ({malicious_prob*100:.1f}%)")
             return jsonify({
                 "status": "MALICIOUS", 
                 "probability": float(malicious_prob),
-                "message": "Webshell tespit edildi!"
+                "message": "Web shell detected"
             })
         else:
-            print(f"✅ [BİLGİ] Temiz dosya: {file.filename}")
+            print(f"[INFO] Clean file: {file.filename}")
             return jsonify({
                 "status": "BENIGN", 
                 "probability": float(malicious_prob),
-                "message": "Dosya temiz."
+                "message": "File is clean"
             })
 
     except Exception as e:
@@ -101,5 +101,5 @@ def analyze_file():
 
 
 if __name__ == '__main__':
-    # Sunucuyu 0.0.0.0 ile başlatıyoruz ki diğer bilgisayarlar da bağlanabilsin
+    # Start on 0.0.0.0 so other machines can connect
     app.run(host='0.0.0.0', port=5000, debug=False)

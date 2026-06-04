@@ -12,10 +12,10 @@ from sklearn.neighbors import KNeighborsClassifier
 import xgboost as xgb
 import joblib
 
-# Gereksiz uyarıları gizle
+# Hide noisy warnings
 warnings.filterwarnings("ignore")
 
-# 1. YOL VE KLASÖR AYARLARI
+# 1) Paths and folders
 base_dir = os.path.dirname(os.path.abspath(__file__))
 data_path = os.path.join(base_dir, "dataset", "webshell_features.csv")
 models_dir = os.path.join(base_dir, "models")
@@ -24,15 +24,15 @@ scaler_path = os.path.join(base_dir, "scaler.joblib")
 if not os.path.exists(models_dir):
     os.makedirs(models_dir)
 
-# 2. VERİYİ YÜKLE VE BÖL
+# 2) Load and split the data
 print("\n" + "="*70)
-print("🚀 YAPAY ZEKA MODELLERİ: EĞİTİM VE OPTİMİZASYON BAŞLIYOR...")
+print("Model training and tuning is starting")
 print("="*70)
 
 try:
     df = pd.read_csv(data_path)
 except FileNotFoundError:
-    print(f"❌ Hata: {data_path} bulunamadı!")
+    print(f"Error: {data_path} not found")
     exit()
 
 X = df.drop('label', axis=1)
@@ -40,16 +40,16 @@ y = df['label']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# StandardScaler (Orijinal sütun isimlerini koruyarak)
+# StandardScaler while keeping original column names
 scaler = StandardScaler()
 X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
 X_test_scaled = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
 
-# Ölçeklendiriciyi kaydet
+# Save the scaler
 joblib.dump(scaler, scaler_path)
-print("✅ Ölçekleyici (Scaler) başarıyla oluşturuldu ve kaydedildi.\n")
+print("Scaler created and saved\n")
 
-# 3. MODELLER VE ARAMA UZAYLARI (Anti-Overfitting Ayarlarıyla)
+# 3) Models and search spaces with anti overfitting settings
 models_to_train = {
     "LogisticRegression": {
         "model": LogisticRegression(random_state=42, max_iter=1000),
@@ -99,17 +99,17 @@ models_to_train = {
     }
 }
 
-# 4. EĞİTİM, OPTİMİZASYON VE KAYDETME DÖNGÜSÜ
-print(f"Toplam {len(models_to_train)} model sırayla eğitilecek ve optimize edilecek...\n")
+# 4) Training, tuning, and saving loop
+print(f"Training and tuning {len(models_to_train)} models\n")
 
 for name, config in models_to_train.items():
-    print(f"⏳ {name} eğitiliyor ve en iyi ayarları (tune) aranıyor...")
+    print(f"Training {name} and searching for best settings")
     start_time = time.time()
     
     model = config["model"]
     params = config["params"]
     
-    # Her model için rastgele 10 farklı kombinasyon dene ve en iyisini bul
+    # Try 10 random parameter combinations and keep the best
     search = RandomizedSearchCV(
         estimator=model,
         param_distributions=params,
@@ -121,24 +121,24 @@ for name, config in models_to_train.items():
         verbose=0
     )
     
-    # Modeli eğit
+    # Train the model
     search.fit(X_train_scaled, y_train)
     
     best_model = search.best_estimator_
     
-    # Test veri seti üzerinde başarısını ölç
+    # Measure accuracy on the test set
     y_pred = best_model.predict(X_test_scaled)
     acc = accuracy_score(y_test, y_pred)
     
     end_time = time.time()
     
-    print(f"✅ {name} Tamamlandı! (Süre: {end_time - start_time:.1f}sn) | Eğitim Seti Doğruluğu: % {acc*100:.2f}")
-    
-    # Optimize edilmiş modeli kaydet
+    print(f"{name} done in {end_time - start_time:.1f}s | Test accuracy: {acc*100:.2f}%")
+
+    # Save the tuned model
     model_file_path = os.path.join(models_dir, f"{name}.joblib")
     joblib.dump(best_model, model_file_path)
 
 print("\n" + "="*70)
-print(f"💾 Tüm modeller '{models_dir}' klasörüne savaşa hazır (Tuned) halleriyle kaydedildi!")
-print("Artık dış dünyadaki başarılarını görmek için 'external_data_test.py' dosyasını çalıştırabilirsin.")
+print(f"All models saved to '{models_dir}'")
+print("Run 'external_data_test.py' to evaluate on external data")
 print("="*70)
