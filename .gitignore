@@ -153,11 +153,6 @@ banned_ips.txt
 *.h5
 *.model
 
-# Dataset - ignore raw PHP files but keep feature CSV
-AI_Model_Builder/dataset/benign/
-AI_Model_Builder/dataset/malicious/
-AI_Model_Builder/dataset/external_data/
-
 # Quarantine & Test data
 quarantine/*
 test_www/*

