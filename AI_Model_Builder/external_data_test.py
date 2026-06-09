@@ -20,7 +20,7 @@ benign_dir = os.path.join(BASE_DIR, "dataset", "benign")
 models_dir = os.path.join(BASE_DIR, "models")
 
 # Probability threshold to classify a file as a webshell.
-PROBABILITY_THRESHOLD = 0.50
+PROBABILITY_THRESHOLD = 0.60
 
 # Build a hash map for files in a directory to detect duplicates
 def get_hashes_from_dir(directory):

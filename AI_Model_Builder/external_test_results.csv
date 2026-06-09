@@ -1,0 +1,6 @@
+Model,Accuracy (%),Precision (%),Recall (%),F1 Score (%),Predicted Malicious,Predicted Benign,True Negatives (TN),False Positives (FP),False Negatives (FN),True Positives (TP),Total Test Files
+SVM,93.04,63.86,91.7,75.28,415,2085,2061,150,24,265,2500
+XGBoost,95.0,71.03,95.85,81.59,390,2110,2098,113,12,277,2500
+LogisticRegression,85.12,43.27,92.39,58.94,617,1883,1861,350,22,267,2500
+RandomForest,95.68,74.39,95.5,83.64,371,2129,2116,95,13,276,2500
+KNN,93.6,66.17,91.35,76.74,399,2101,2076,135,25,264,2500
