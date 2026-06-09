@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebShell Detector - Master Dashboard</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .stat-card { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .icon-box { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 24px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#"><i class="bi bi-shield-lock"></i> WebShell Detector Master</a>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Özet İstatistikler -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-primary text-white me-3"><i class="bi bi-bar-chart-fill"></i></div>
+                    <div>
+                        <h6 class="mb-0 text-muted">Toplam Tarama</h6>
+                        <h4 class="mb-0">{{ stats.total_scans }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-danger text-white me-3"><i class="bi bi-bug-fill"></i></div>
+                    <div>
+                        <h6 class="mb-0 text-muted">Zararlı (Malicious)</h6>
+                        <h4 class="mb-0">{{ stats.total_malicious }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-success text-white me-3"><i class="bi bi-shield-check"></i></div>
+                    <div>
+                        <h6 class="mb-0 text-muted">Temiz (Benign)</h6>
+                        <h4 class="mb-0">{{ stats.total_benign }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-info text-white me-3"><i class="bi bi-cpu-fill"></i></div>
+                    <div>
+                        <h6 class="mb-0 text-muted">Aktif Model</h6>
+                        <h5 class="mb-0" style="font-size: 1rem; word-break: break-all;">{{ model_name }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Son Taramalar Tablosu -->
+    <div class="row">
+        <div class="col-md-9">
+            <div class="card stat-card mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0"><i class="bi bi-activity"></i> Son Taramalar (Canlı Akış)</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="location.reload();"><i class="bi bi-arrow-clockwise"></i> Yenile</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tarih / Saat</th>
+                                    <th>Dosya Adı</th>
+                                    <th>Algoritma İhtimali</th>
+                                    <th>Sonuç</th>
+                                    <th>Kaynak IP</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for scan in history %}
+                                <tr>
+                                    <td>{{ scan.timestamp }}</td>
+                                    <td><code>{{ scan.filename }}</code></td>
+                                    <td>%{{ "%.1f"|format(scan.probability * 100) }}</td>
+                                    <td>
+                                        {% if scan.status == 'MALICIOUS' %}
+                                            <span class="badge bg-danger">Zararlı</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Temiz</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ scan.source_ip }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">Henüz bir veri yok. Ajanlardan istek bekleniyor...</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card mb-4 border-danger">
+                <div class="card-header bg-danger text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-shield-x"></i> Banlanmış IP'ler</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for ip in stats.banned_ips %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center text-danger fw-bold">
+                            {{ ip }}
+                            <i class="bi bi-slash-circle-fill"></i>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-muted text-center py-3">Banlanan IP bulunmuyor.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
