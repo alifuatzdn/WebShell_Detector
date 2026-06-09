@@ -8,7 +8,7 @@ from tqdm import tqdm
 from collections import Counter
 
 
-# 1) Entropy calculation with a fast method
+# Entropy calculation with a fast method
 def calculate_entropy(text):
     if not text: return 0
     counts = Counter(text)
@@ -30,7 +30,7 @@ def calculate_md5(file_path):
     except Exception:
         return None
 
-# 2) Feature extraction with regex helpers
+# Feature extraction with regex helpers
 def extract_features(file_path, label):
     try:
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -38,38 +38,31 @@ def extract_features(file_path, label):
             lines = content.split('\n')
 
         features = {}
-        # 1) Structural features
+        # Structural features
         features['entropy'] = calculate_entropy(content)
         features['file_length'] = len(content)
         features['max_line_length'] = max([len(line) for line in lines]) if lines else 0
         features['nb_lines'] = len(lines)
 
-        # 2) Risky functions for execution and encoding
+        # Risky functions for execution and encoding
         features['eval_count'] = content.count('eval(') + content.count('assert(') + content.count('create_function(') + content.count('preg_replace(')
         features['exec_count'] = content.count('shell_exec(') + content.count('system(') + content.count(
             'exec(') + content.count('passthru(') + content.count('popen(') + content.count('proc_open(')
         features['obfuscation_count'] = content.count('base64_decode(') + content.count('str_rot13(') + content.count(
             'gzinflate(') + content.count('unserialize(') + content.count('gzuncompress(') + content.count('strrev(')
 
-        # 3) File and system manipulation
+        # File and system manipulation
         features['fs_count'] = content.count('chmod(') + content.count('fopen(') + content.count('file_put_contents(')
 
-        # 4) External input use via superglobals
+        # External input use via superglobals
         features['network_input_count'] = content.count('$_POST') + content.count('$_GET') + content.count(
             '$_REQUEST') + content.count('$_COOKIE') + content.count('$_SERVER') + content.count('$_FILES')
-
-        # ---------------------------------------------------------
-        # New features for improved detection
-        # ---------------------------------------------------------
         
-        # 5) Special character density for obfuscated code
-        # Web shells often contain many of these symbols
+        # Special character density for obfuscated code
         special_chars = re.findall(r'[^a-zA-Z0-9\s]', content)
-        features['special_char_ratio'] = len(special_chars) / len(content) if len(content) > 0 else 0
+        features['special_char_ratio'] = round((len(special_chars) / len(content)), 5) if len(content) > 0 else 0
 
-        # 6) Long or random variable names like $O00OO0, $x123_y
-        # Regular code uses meaningful names like $user_id
-        # Web shells often use long random names to hide intent
+        # Long or random variable names like $O00OO0, $x123_y
         variables = re.findall(r'\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*', content)
         if variables:
             avg_var_length = sum(len(var) for var in variables) / len(variables)
@@ -79,13 +72,12 @@ def extract_features(file_path, label):
             avg_var_length = 0
             long_vars = 0
             
-        features['avg_var_length'] = avg_var_length
+        features['avg_var_length'] = round(avg_var_length, 5)
         features['long_vars_count'] = long_vars
 
-        # 7) Whitespace ratio
-        # Malicious files can have long lines with very little whitespace
+        # Whitespace ratio
         whitespaces = sum(1 for char in content if char.isspace())
-        features['whitespace_ratio'] = whitespaces / len(content) if len(content) > 0 else 0
+        features['whitespace_ratio'] = round((whitespaces / len(content)), 5) if len(content) > 0 else 0
 
         features['label'] = label
         return features
@@ -93,7 +85,7 @@ def extract_features(file_path, label):
         return None
 
 
-# 3) Directory scan
+# Directory scan
 def process_directory(directory_path, label, seen_hashes):
     data = []
     skipped_count = 0
@@ -143,6 +135,8 @@ if __name__ == "__main__":
     print(f"Unique malicious files: {mal_count}")
     print(f"Unique benign files   : {ben_count}")
 
+
+
     min_count = min(mal_count, ben_count)
     
     if mal_count > min_count:
@@ -156,6 +150,7 @@ if __name__ == "__main__":
         benign_data = random.sample(benign_data, min_count)
     else:
         print("Dataset is already balanced")
+
 
     print("-" * 50)
     

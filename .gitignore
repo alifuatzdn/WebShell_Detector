@@ -158,6 +158,9 @@ quarantine/*
 test_www/*
 !test_www/.gitkeep
 !quarantine/.gitkeep
+AI_Model_Builder/dataset/benign
+AI_Model_Builder/dataset/external_data
+AI_Model_Builder/dataset/malicious
 
 # Cache & compiled
 *.pyc

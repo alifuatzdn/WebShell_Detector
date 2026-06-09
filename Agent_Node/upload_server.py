@@ -9,10 +9,10 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 
-# Initialize the Flask application
+# Initialize the Flask web application.
 app = Flask(__name__)
 
-# --- Configuration & Path Setup ---
+# Define absolute paths and load environment variables for configuration.
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
 load_dotenv(PROJECT_ROOT / ".env")
@@ -20,23 +20,25 @@ load_dotenv(PROJECT_ROOT / ".env")
 UPLOAD_HOST = os.getenv("UPLOAD_HOST", "0.0.0.0")
 UPLOAD_PORT = int(os.getenv("UPLOAD_PORT", "8000"))
 
+# Define paths for staging uploads and tracking malicious activity.
 STAGING_FOLDER = BASE_DIR / "staging"
 BANNED_IPS_FILE = BASE_DIR / "banned_ips.txt"
 ACCESS_LOG_FILE = BASE_DIR / "access.log"
 
+# Ensure necessary directories and tracking files exist before starting.
 os.makedirs(STAGING_FOLDER, exist_ok=True)
 if not os.path.exists(BANNED_IPS_FILE):
     with open(BANNED_IPS_FILE, 'w') as f:
         pass
 
-# --- Logger Setup ---
+# Configure logging to write upload events to an access log for the Security Agent to parse.
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('access_logger')
 logger.addHandler(logging.FileHandler(ACCESS_LOG_FILE))
 logger.propagate = False
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
-# --- HTML & CSS Templates ---
+# HTML template displayed to users whose IP addresses have been blocked.
 BANNED_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -61,6 +63,7 @@ BANNED_TEMPLATE = """
 </html>
 """
 
+# HTML template for the main upload interface.
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -129,9 +132,8 @@ HTML_TEMPLATE = """
 """
 
 
-# --- Helper Functions ---
 def get_local_ip():
-    """Automatically detects the machine's local network IP address (e.g., 192.168.x.x)"""
+    """Automatically detect the machine's local network IP address."""
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('10.255.255.255', 1))
@@ -144,11 +146,13 @@ def get_local_ip():
 
 
 def is_banned(ip: str) -> bool:
+    """Check if the requester's IP address exists within the dynamic ban list."""
     with open(BANNED_IPS_FILE, "r") as f:
         return ip in {line.strip() for line in f if line.strip()}
 
 
 def get_unique_filepath(filename: str) -> str:
+    """Append a short UUID to the filename if a file with the same name already exists."""
     filepath = STAGING_FOLDER / filename
     if filepath.exists():
         base, ext = os.path.splitext(filename)
@@ -157,6 +161,7 @@ def get_unique_filepath(filename: str) -> str:
 
 
 def render_page(message: str = "", is_success: bool = False):
+    """Inject dynamic status messages into the static HTML template."""
     message_block = ""
     if message:
         alert_class = "success" if is_success else "error"
@@ -164,20 +169,24 @@ def render_page(message: str = "", is_success: bool = False):
     return HTML_TEMPLATE.replace("__MESSAGE_BLOCK__", message_block)
 
 
-# --- Routing ---
 @app.before_request
 def check_ban():
+    """Intercept all requests and block access immediately if the IP is banned."""
     if is_banned(request.remote_addr):
         return BANNED_TEMPLATE, 403
 
 
 @app.route("/", methods=["GET", "POST"])
 def upload():
+    """Handle secure file uploads and trigger logging for the Security Agent."""
     if request.method == "POST":
         file = request.files.get('file')
+
+        # Ensure a file was actually submitted in the request.
         if not file or not file.filename:
             return render_page("You must select a file to upload.", is_success=False)
 
+        # Enforce strict file extension validation to prevent immediate execution risks.
         filename = secure_filename(file.filename)
         if not filename.lower().endswith(('.php', '.txt')):
             return render_page("Invalid file type. Only .php and .txt are allowed.", is_success=False)
@@ -185,16 +194,16 @@ def upload():
         save_path = get_unique_filepath(filename)
         file.save(save_path)
 
+        # Log the upload securely so the Watchdog agent can parse the originating IP later.
         timestamp = datetime.now(timezone.utc).strftime('%d/%b/%Y:%H:%M:%S +0000')
         logger.info(f'{request.remote_addr} - - [{timestamp}] "POST / HTTP/1.1" 200 - "{Path(save_path).name}"')
 
-        msg = f"File '{escape(filename)}' uploaded successfully and is being analyzed. It will be published if it is safe."
+        msg = f"File '{escape(filename)}' uploaded successfully and is being analyzed. It will be published if safe."
         return render_page(msg, is_success=True)
 
     return render_page()
 
 
-# --- Main Execution ---
 if __name__ == "__main__":
     local_ip = get_local_ip()
 
@@ -206,4 +215,5 @@ if __name__ == "__main__":
     print(f" [i] Staging   : {STAGING_FOLDER}")
     print("=" * 50 + "\n")
 
+    # Start the Flask server without debug mode to maintain security.
     app.run(host=UPLOAD_HOST, port=UPLOAD_PORT, debug=False)
