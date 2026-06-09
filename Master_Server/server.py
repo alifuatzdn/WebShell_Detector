@@ -7,7 +7,6 @@ from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 from feature_extraction import extract_features
 from dotenv import load_dotenv
-from collections import deque
 import datetime
 import json
 
@@ -158,6 +157,9 @@ def ban_ip():
 @app.route('/analyze', methods=['POST'])
 def analyze():
     file = request.files.get('file')
+    # Use the original attacker IP sent by the agent, fallback to request IP if not present
+    source_ip = request.form.get('original_ip') or request.remote_addr
+
     if not file or not file.filename:
         return jsonify({"error": "No file provided"}), 400
 
@@ -186,7 +188,7 @@ def analyze():
             "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "filename": file.filename,
             "probability": round(prob, 4),
-            "source_ip": request.remote_addr
+            "source_ip": source_ip
         }
 
         if is_malicious:

@@ -34,10 +34,27 @@ class SecurityAgent(FileSystemEventHandler):
         # Wait slightly to ensure the OS has finished writing the file to disk
         time.sleep(0.5)
 
+        # Before sending to the master, let's look up the REAL attacker's IP from the access log
+        attacker_ip = "127.0.0.1"  # default fallback
+        try:
+            with open(self.log_file, 'r') as f:
+                lines = f.readlines()
+            for line in reversed(lines):
+                if f'"{filepath.name}"' in line:
+                    attacker_ip = line.split(' ')[0]
+                    break
+        except Exception:
+            pass
+
         try:
             # Open the file and POST it to the server
             with open(filepath, 'rb') as f:
-                res = requests.post(self.server_url, files={'file': f}, timeout=5)
+                res = requests.post(
+                    self.server_url,
+                    files={'file': f},
+                    data={'original_ip': attacker_ip},  # Send the real IP we detected
+                    timeout=5
+                )
 
             # Check the server's response
             if res.status_code == 200:

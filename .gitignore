@@ -173,3 +173,17 @@ test_www/*
 Thumbs.db
 .DS_Store
 
+# Agent Node dynamically generated files
+Agent_Node/staging/*
+Agent_Node/test_www/*
+Agent_Node/quarantine/*
+!Agent_Node/staging/.gitkeep
+!Agent_Node/test_www/.gitkeep
+!Agent_Node/quarantine/.gitkeep
+Agent_Node/access.log
+Agent_Node/banned_ips.txt
+
+# Master Server dynamically generated files
+Master_Server/master_scans.log
+Master_Server/dashboard_data.json
+Master_Server/temp_*
