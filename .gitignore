@@ -148,7 +148,6 @@ banned_ips.txt
 *.crt
 
 # Model & ML artifacts
-*.joblib
 *.pkl
 *.h5
 *.model
