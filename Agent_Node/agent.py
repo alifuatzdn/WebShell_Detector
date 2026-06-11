@@ -59,7 +59,7 @@ class SecurityAgent(FileSystemEventHandler):
             if res.status_code == 200:
                 data = res.json()
                 if data.get("status") == "MALICIOUS":
-                    self._handle_malicious(filepath)
+                    self._handle_malicious(filepath, attacker_ip)
                 else:
                     self._handle_benign(filepath)
         except Exception as e:
@@ -71,7 +71,7 @@ class SecurityAgent(FileSystemEventHandler):
         shutil.move(str(filepath), str(dest))
         print(f"[OK] {filepath.name} is clean. Moved to web directory.")
 
-    def _handle_malicious(self, filepath: Path):
+    def _handle_malicious(self, filepath: Path, attacker_ip: str):
         dest = self.quarantine_dir / filepath.name
 
         # Isolate the threat and revoke all execution permissions immediately.
@@ -80,21 +80,7 @@ class SecurityAgent(FileSystemEventHandler):
         print(f"[ALERT] {filepath.name} is MALICIOUS! Quarantined.")
 
         # Initiate the trace-and-ban protocol for the offending IP.
-        self._hunt_and_ban(filepath.name)
-
-    def _hunt_and_ban(self, filename: str):
-        # Trace the specific malicious file back to its source IP in the logs.
-        try:
-            with open(self.log_file, 'r') as f:
-                lines = f.readlines()
-
-            for line in reversed(lines):
-                if f'"{filename}"' in line:
-                    attacker_ip = line.split(' ')[0]
-                    self._ban_ip(attacker_ip)
-                    return
-        except Exception as e:
-            print(f"[WARN] Log parsing failed: {e}")
+        self._ban_ip(attacker_ip)
 
     def _ban_ip(self, ip: str):
         # Persist the attacker's IP to the application's internal ban list.

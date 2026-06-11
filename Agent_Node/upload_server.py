@@ -194,7 +194,7 @@ def upload():
         save_path = get_unique_filepath(filename)
         file.save(save_path)
 
-        # Log the upload securely so the Watchdog agent can parse the originating IP later.
+        # Log the upload securely so the agent can parse the originating IP later.
         timestamp = datetime.now(timezone.utc).strftime('%d/%b/%Y:%H:%M:%S +0000')
         logger.info(f'{request.remote_addr} - - [{timestamp}] "POST / HTTP/1.1" 200 - "{Path(save_path).name}"')
 

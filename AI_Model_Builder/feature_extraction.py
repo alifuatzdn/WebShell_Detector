@@ -135,8 +135,6 @@ if __name__ == "__main__":
     print(f"Unique malicious files: {mal_count}")
     print(f"Unique benign files   : {ben_count}")
 
-
-
     min_count = min(mal_count, ben_count)
     
     if mal_count > min_count:
@@ -150,7 +148,6 @@ if __name__ == "__main__":
         benign_data = random.sample(benign_data, min_count)
     else:
         print("Dataset is already balanced")
-
 
     print("-" * 50)
     

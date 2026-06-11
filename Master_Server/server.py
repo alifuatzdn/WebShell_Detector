@@ -225,7 +225,14 @@ def analyze():
             dashboard_stats["total_malicious"] += 1
             scan_record["status"] = "MALICIOUS"
 
-            print(f"[ALARM] Malicious file detected: {file.filename} ({prob * 100:.1f}%)")
+            print(f"[ALARM] Malicious file detected: {file.filename} ({prob * 100:.1f}%) from {source_ip}")
+
+            # Automatically ban the source IP address upon detection.
+            if source_ip not in get_banned_ips():
+                with open(AGENT_BANNED_IPS_FILE, 'a') as f:
+                    f.write(f"{source_ip}\n")
+                print(f"[SECURITY] IP address {source_ip} has been banned.")
+
             save_dashboard_data(dashboard_stats)
             log_scan_to_file(scan_record)
 

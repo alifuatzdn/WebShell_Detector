@@ -12,5 +12,3 @@ requests>=2.25
 werkzeug>=2.0
 tqdm>=4.60
 python-dotenv>=1.0.0
-
-# Optional (if you use features that require them)
